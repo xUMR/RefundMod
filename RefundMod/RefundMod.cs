@@ -30,6 +30,7 @@ namespace RefundMod
         public override void OnLevelLoaded(LoadMode mode)
         {
             _behaviour = RefundBehaviour.Instance;
+            _behaviour.Load();
         }
 
         public override void OnLevelUnloading()

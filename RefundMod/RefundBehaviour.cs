@@ -49,6 +49,17 @@ namespace RefundMod
             _currentDay = _simulationManager.m_currentGameTime.Day;
             _fieldInfo = typeof(SimulationManager).GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic);
 
+            _ui = gameObject.AddComponent<RefundModUI>();
+            
+            Load();
+
+            _initialized = true;
+
+            return this;
+        }
+
+        public void Load()
+        {
             try
             {
                 Data = RefundModData.Deserialize();
@@ -57,13 +68,7 @@ namespace RefundMod
             {
                 Data = new RefundModData();
             }
-            
-            _ui = gameObject.AddComponent<RefundModUI>();
             _ui.Init(Data);
-
-            _initialized = true;
-
-            return this;
         }
 
         private void ResetBuildIndexHistory()
