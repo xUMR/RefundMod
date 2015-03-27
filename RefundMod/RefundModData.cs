@@ -10,6 +10,7 @@ namespace RefundMod
         private const string Path = "refund.settings.xml";
 
         public bool Shrunk;
+        public bool Visible;
 
         public bool OnlyWhenPaused;
         public bool RemoveTimeLimit;
@@ -31,9 +32,10 @@ namespace RefundMod
         public float X;
         public float Y;
 
-        public RefundModData(bool shrunk, bool onlyWhenPaused, bool removeTimeLimit, float refundModifier, float relocateModifier, float x, float y)
+        public RefundModData(bool shrunk, bool visible, bool onlyWhenPaused, bool removeTimeLimit, float refundModifier, float relocateModifier, float x, float y)
         {
             Shrunk = shrunk;
+            Visible = visible;
             OnlyWhenPaused = onlyWhenPaused;
             RemoveTimeLimit = removeTimeLimit;
             RefundModifier = refundModifier;
@@ -42,7 +44,7 @@ namespace RefundMod
             Y = y;
         }
 
-        public RefundModData() : this(false, false, false, 0.75f, 0.2f, 60, 20) { }
+        public RefundModData() : this(false, false, false, false, 0.75f, 0.2f, 60, 20) { }
 
         public void Serialize()
         {

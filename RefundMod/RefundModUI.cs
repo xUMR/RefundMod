@@ -45,7 +45,7 @@ namespace RefundMod
         private string RelocateText { get { return "Relocation Cost: " + _data.RelocateModifier * 100 + "%"; } }
 
         private bool _clicked;
-        private bool _visible;
+        private bool _freeCameraMode;
         private bool _ready;
 
         private float _t0;
@@ -58,12 +58,12 @@ namespace RefundMod
 
         void Update()
         {
-            _visible = !_cameraController.m_freeCamera;
+            _freeCameraMode = _cameraController.m_freeCamera;
         }
 
         void OnGUI()
         {
-            if (!_visible) return;
+            if (!_data.Visible || _freeCameraMode) return;
 
             if (_windowStyle == null)
             {
