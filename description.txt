@@ -1,0 +1,7 @@
+Modify refund and relocation cost amounts in-game, remove time limit for refund. [url=https://github.com/xUMR/RefundMod/]Source[/url] 
+
+You can change all the settings in-game, except enabling/disabling time limit. The configuration file is [i]...\Steam\SteamApps\common\Cities_Skylines\refund.settings.xml[/i].
+
+* Change [i]Visible[/i] to [i]true[/i] to see the mod UI. 
+* Change [i]RemoveTimeLimit[/i] to [i]true[/i] to disable the time limit. 
+* [i]OnlyWhenPaused[/i] setting modifies the default behaviour; if enabled and the game is paused, you won't get a refund even if the time limit hasn't been reached. 
