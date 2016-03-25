@@ -7,6 +7,7 @@ namespace RefundMod
     public class Mod : IUserMod
     {
         public string Name { get { return "Refund"; } }
+        public string Description { get { return "Adjustable refunds and relocation costs"; } }
 
         const string _infoTxt =
             //------------------------------------------------------------------------------|
