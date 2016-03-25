@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Reflection;
 using ColossalFramework;
 using UnityEngine;
@@ -8,11 +7,6 @@ namespace RefundMod
 {
     public class RefundBehaviour : MonoBehaviour
     {
-        public bool CanRefund
-        {
-            get { return (!Data.OnlyWhenPaused || _simulationManager.SimulationPaused); }
-        }
-
         private static RefundBehaviour _instance;
         public static RefundBehaviour Instance
         {
@@ -24,15 +18,14 @@ namespace RefundMod
                     _instance = go.AddComponent<RefundBehaviour>();
                     _instance.Init();
                 }
-                    
+
                 return _instance;
             }
         }
 
         private bool _initialized;
 
-        public RefundModData Data;
-        private RefundModUI _ui;
+        public Data Data;
 
         private SimulationManager _simulationManager;
 
@@ -46,11 +39,8 @@ namespace RefundMod
                 return this;
 
             _simulationManager = Singleton<SimulationManager>.instance;
-            _currentDay = _simulationManager.m_currentGameTime.Day;
-            _fieldInfo = typeof(SimulationManager).GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic);
+            _currentDay = _simulationManager.m_currentGameTime.Day - 1;
 
-            _ui = gameObject.AddComponent<RefundModUI>();
-            
             Load();
 
             _initialized = true;
@@ -62,13 +52,13 @@ namespace RefundMod
         {
             try
             {
-                Data = RefundModData.Deserialize();
+                Data = Data.Deserialize();
             }
             catch (Exception)
             {
-                Data = new RefundModData();
+                Data = new Data();
+                Data.Serialize();
             }
-            _ui.Init(Data);
         }
 
         private void ResetBuildIndexHistory()
@@ -77,15 +67,13 @@ namespace RefundMod
             {
                 _fieldInfo = typeof(SimulationManager).GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic);
             }
-            else
-            {
-                var values = (uint[])_fieldInfo.GetValue(_simulationManager);
-                var len = values.Length;
-                for (var i = 0; i < len; i++)
-                    values[i] = 0; 
-            }
-        }
 
+            var values = (uint[])_fieldInfo.GetValue(_simulationManager);
+            var len = values.Length;
+            for (var i = 0; i < len; i++)
+                values[i] = 0;
+        }
+        
         void Update()
         {
             if (Data.RemoveTimeLimit && _currentDay != _simulationManager.m_currentGameTime.Day)

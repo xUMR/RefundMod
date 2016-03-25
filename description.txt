@@ -1,7 +1,7 @@
-Modify refund and relocation cost amounts in-game, remove time limit for refund. [url=https://github.com/xUMR/RefundMod/]Source[/url] 
+Modify refund and relocation costs in-game, remove time limit for refund. [url=https://github.com/xUMR/RefundMod/]Source[/url] 
 
-You can change all the settings in-game, except enabling/disabling time limit. The configuration file is [i]...\Steam\SteamApps\common\Cities_Skylines\refund.settings.xml[/i].
+Settings can be found in the in-game options menu. [b]The default settings won't affect gameplay.[/b]
 
-* Change [i]Visible[/i] to [i]true[/i] to see the mod UI. 
-* Change [i]RemoveTimeLimit[/i] to [i]true[/i] to disable the time limit. 
-* [i]OnlyWhenPaused[/i] setting modifies the default behaviour; if enabled and the game is paused, you won't get a refund even if the time limit hasn't been reached. 
+* Change [i]RemoveTimeLimit[/i] to [i]true[/i] to disable the time limit, bulldozed buildings will always be refunded. If disabled after being enabled, playing for some time (14 in-game days when I tested) will nullify the changes.
+* [i]RefundModifier[/i] sets the refund modifier, can be any value between -1 and 1. Set to 1 for a full refund.
+* [i]RelocateModifier[/i] sets the relocation modifier, can be any value between 0 and 1. Set to 0 for free relocation.
