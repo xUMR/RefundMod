@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using ColossalFramework;
 using UnityEngine;
@@ -23,15 +24,30 @@ namespace RefundMod
             }
         }
 
-        private bool _initialized;
+        bool _initialized;
+        bool _wasPaused;
+        int _currentDay;
+        uint _lastBuildIndex;
 
         public Data Data;
 
-        private SimulationManager _simulationManager;
+        SimulationManager _simulationManager;
 
-        private int _currentDay;
+        uint[] m_values;
+        uint[] _buildIndexHistory
+        {
+            get
+            {
+                if (m_values == null)
+                {
+                    m_values = (uint[])_simulationManager.GetType()
+                        .GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic)
+                        .GetValue(_simulationManager);
+                }
 
-        private FieldInfo _fieldInfo;
+                return m_values;
+            }
+        }
 
         public RefundBehaviour Init()
         {
@@ -40,7 +56,7 @@ namespace RefundMod
 
             _simulationManager = Singleton<SimulationManager>.instance;
             _currentDay = _simulationManager.m_currentGameTime.Day - 1;
-
+            
             Load();
 
             _initialized = true;
@@ -61,26 +77,71 @@ namespace RefundMod
             }
         }
 
-        private void ResetBuildIndexHistory()
+        private void FillBuildIndexHistory(uint val, bool storeLastBuildIndex = true)
         {
-            if (_fieldInfo == null)
+            if (storeLastBuildIndex)
+                _lastBuildIndex = _buildIndexHistory.Where(n => n != 0 && n != uint.MaxValue).Min();
+
+            var len = _buildIndexHistory.Length;
+            for (var i = 0; i < len; i++)
+                _buildIndexHistory[i] = val;
+        }
+
+        private void AllowRefunds(bool useCurrentBuildIndex = true)
+        {
+            _buildIndexHistory[_simulationManager.m_currentFrameIndex >> 8 & 31] = useCurrentBuildIndex
+                ? _simulationManager.m_currentBuildIndex
+                : _lastBuildIndex;
+        }
+
+        void OnPause()
+        {
+            if (Data.OnlyWhenPaused)
+                AllowRefunds();
+        }
+
+        void OnResume()
+        {
+            if (Data.OnlyWhenPaused)
+                FillBuildIndexHistory(uint.MaxValue, false);
+        }
+
+        bool IsNewDay()
+        {
+            if (_currentDay != _simulationManager.m_currentGameTime.Day)
             {
-                _fieldInfo = typeof(SimulationManager).GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic);
+                _currentDay = _simulationManager.m_currentGameTime.Day;
+                return true;
             }
 
-            var values = (uint[])_fieldInfo.GetValue(_simulationManager);
-            var len = values.Length;
-            for (var i = 0; i < len; i++)
-                values[i] = 0;
+            return false;
         }
         
         void Update()
         {
-            if (Data.RemoveTimeLimit && _currentDay != _simulationManager.m_currentGameTime.Day)
+            bool validated;
+            if ((validated = Data.Validated()) || IsNewDay())
             {
-                ResetBuildIndexHistory();
-                _currentDay = _simulationManager.m_currentGameTime.Day;
+                if (Data.OnlyWhenPaused)
+                {
+                    // OnlyWhenPaused has just been set in options menu
+                    if (validated && _simulationManager.SimulationPaused)
+                        AllowRefunds(false);
+                    else
+                        FillBuildIndexHistory(uint.MaxValue);
+                }
+                else if (Data.RemoveTimeLimit)
+                {
+                    FillBuildIndexHistory(0);
+                }
             }
+
+            if (!_wasPaused && _simulationManager.SimulationPaused)
+                OnPause();
+            else if (_wasPaused && !_simulationManager.SimulationPaused)
+                OnResume();
+            
+            _wasPaused = _simulationManager.SimulationPaused;
         }
     }
 }

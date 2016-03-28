@@ -8,8 +8,10 @@ namespace RefundMod
     public class Data
     {
         private const string Path = "refund.settings.xml";
+        private bool needsValidation;
 
         public bool RemoveTimeLimit { get; set; }
+        public bool OnlyWhenPaused { get; set; }
 
         private float _refundModifier;
         public float RefundModifier
@@ -25,14 +27,31 @@ namespace RefundMod
             set { _relocateModifier = (float)Math.Round(Mathf.Clamp01(value), 2); }
         }
 
-        public Data(bool removeTimeLimit, float refundModifier, float relocateModifier)
+        public Data(bool removeTimeLimit, bool onlyWhenPaused, float refundModifier, float relocateModifier)
         {
             RemoveTimeLimit = removeTimeLimit;
+            OnlyWhenPaused = onlyWhenPaused;
             RefundModifier = refundModifier;
             RelocateModifier = relocateModifier;
         }
 
-        public Data() : this(false, 0.75f, 0.2f) { }
+        public Data() : this(false, false, 0.75f, 0.2f) { }
+        
+        public void RequestValidation()
+        {
+            needsValidation = true;
+        }
+
+        public bool Validated()
+        {
+            if (needsValidation)
+            {
+                needsValidation = false;
+                return true;
+            }
+
+            return false;
+        }
 
         public void Serialize()
         {
