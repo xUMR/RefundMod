@@ -4,7 +4,11 @@ namespace RefundMod
 {
     public static class Logger
     {
+#if DEBUG
+        const bool _enabled = true;
+#else
         const bool _enabled = false;
+#endif
         const string _label = "(refundmod): ";
 
 #pragma warning disable CS0162 // Unreachable code detected
@@ -15,15 +19,20 @@ namespace RefundMod
             DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, _label + str);
         }
 
-        public static void Message(object[] args, string join = " ")
+        public static void Message(object o)
+        {
+            Message(o.ToString());
+        }
+
+        public static void Message<T>(params T[] args)
         {
             if (!_enabled) return;
 
             var strBuilder = new System.Text.StringBuilder();
             foreach (var obj in args)
             {
-                strBuilder.Append(obj);
-                strBuilder.Append(join);
+                strBuilder.Append(obj.ToString());
+                strBuilder.Append(' ');
             }
 
             Message(strBuilder.ToString());
