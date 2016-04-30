@@ -1,4 +1,5 @@
-﻿using ColossalFramework.Plugins;
+﻿using System;
+using static ColossalFramework.Plugins.PluginManager;
 
 namespace RefundMod
 {
@@ -11,46 +12,46 @@ namespace RefundMod
 #endif
         const string _label = "(refundmod): ";
 
+        public static void Message<T>(T o, params T[] args) => Log(MessageType.Message, o, args);
+        public static void Warning<T>(T o, params T[] args) => Log(MessageType.Warning, o, args);
+        public static void Error<T>(T o, params T[] args) => Log(MessageType.Error, o, args);
+
+#pragma warning disable S1144 // Unused private types or members should be removed
 #pragma warning disable CS0162 // Unreachable code detected
-        public static void Message(string str)
+        static void Log<T>(MessageType messageType, T o, params T[] args)
         {
             if (!_enabled) return;
 
-            DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, _label + str);
-        }
-
-        public static void Message(object o)
-        {
-            Message(o.ToString());
-        }
-
-        public static void Message<T>(params T[] args)
-        {
-            if (!_enabled) return;
-
-            var strBuilder = new System.Text.StringBuilder();
-            foreach (var obj in args)
+            string message;
+            if (o is Array)
             {
-                strBuilder.Append(obj.ToString());
-                strBuilder.Append(' ');
+                var array = o as Array;
+                var strBuilder = new System.Text.StringBuilder();
+                foreach (var obj in array)
+                {
+                    strBuilder.Append(obj);
+                    strBuilder.Append(' ');
+                }
+
+                message = strBuilder.ToString();
             }
+            else if (args.Length > 0)
+            {
+                var strBuilder = new System.Text.StringBuilder(o.ToString());
+                foreach (var obj in args)
+                {
+                    strBuilder.Append(obj);
+                    strBuilder.Append(' ');
+                }
 
-            Message(strBuilder.ToString());
-        }
+                message = strBuilder.ToString();
+            }
+            else
+                message = o.ToString();
 
-        public static void Warning(string str)
-        {
-            if (!_enabled) return;
-
-            DebugOutputPanel.AddMessage(PluginManager.MessageType.Warning, _label + str);
-        }
-
-        public static void Error(string str)
-        {
-            if (!_enabled) return;
-
-            DebugOutputPanel.AddMessage(PluginManager.MessageType.Error, _label + str);
+            DebugOutputPanel.AddMessage(messageType, _label + message);
         }
 #pragma warning restore CS0162 // Unreachable code detected
+#pragma warning restore S1144 // Unused private types or members should be removed
     }
 }

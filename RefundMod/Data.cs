@@ -8,10 +8,31 @@ namespace RefundMod
     public class Data
     {
         private const string Path = "refund.settings.xml";
-        private bool needsValidation;
+        private bool _needsValidation;
+        private static Data _instance;
+        public static Data ModData => (_instance == null) ? (_instance = Load()) : _instance;
 
-        public bool RemoveTimeLimit { get; set; }
-        public bool OnlyWhenPaused { get; set; }
+        private bool _removeTimeLimit;
+        public bool RemoveTimeLimit
+        {
+            get { return _removeTimeLimit; }
+            set
+            {
+                _removeTimeLimit = value;
+                if (value) _onlyWhenPaused = false;
+            }
+        }
+
+        private bool _onlyWhenPaused;
+        public bool OnlyWhenPaused
+        {
+            get { return _onlyWhenPaused; }
+            set
+            {
+                _onlyWhenPaused = value;
+                if (value) _removeTimeLimit = false;
+            }
+        }
 
         private float _refundModifier;
         public float RefundModifier
@@ -36,24 +57,39 @@ namespace RefundMod
         }
 
         public Data() : this(false, false, 0.75f, 0.2f) { }
-        
-        public void RequestValidation()
+
+        public void Invalidate()
         {
-            needsValidation = true;
+            _needsValidation = true;
         }
 
         public bool Validated()
         {
-            if (needsValidation)
+            if (_needsValidation)
             {
-                needsValidation = false;
+                _needsValidation = false;
                 return true;
             }
 
             return false;
         }
 
-        public void Serialize()
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = (int)2166136261;
+
+                hash = (hash * 16777619) ^ RemoveTimeLimit.GetHashCode();
+                hash = (hash * 16777619) ^ OnlyWhenPaused.GetHashCode();
+                hash = (hash * 16777619) ^ RefundModifier.GetHashCode();
+                hash = (hash * 16777619) ^ RelocateModifier.GetHashCode();
+
+                return hash;
+            }
+        }
+
+        public void Save()
         {
             using (var stream = File.CreateText(Path))
             {
@@ -62,10 +98,9 @@ namespace RefundMod
             }
         }
 
-        public static Data Deserialize()
+        static Data Load()
         {
             Data data;
-
             using (var stream = File.OpenRead(Path))
             {
                 var serializer = new XmlSerializer(typeof(Data));

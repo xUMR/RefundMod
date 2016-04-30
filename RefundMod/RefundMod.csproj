@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Economy.cs" />
+    <Compile Include="EventManager.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Loading.cs" />
     <Compile Include="Logger.cs" />
@@ -55,10 +56,11 @@
     <Compile Include="RefundBehaviour.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Data.cs" />
+    <Compile Include="Ui.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Users\user\AppData\Local\Colossal Order\Cities_Skylines\Addons\Mods\Refund\$(TargetFileName)"</PostBuildEvent>
+    <PostBuildEvent>copy /Y "$(TargetDir)$(TargetFileName)" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\Refund\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

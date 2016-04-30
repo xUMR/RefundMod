@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using ColossalFramework;
 using UnityEngine;
@@ -9,139 +8,132 @@ namespace RefundMod
     public class RefundBehaviour : MonoBehaviour
     {
         private static RefundBehaviour _instance;
-        public static RefundBehaviour Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    var go = new GameObject();
-                    _instance = go.AddComponent<RefundBehaviour>();
-                    _instance.Init();
-                }
-
-                return _instance;
-            }
-        }
-
-        bool _initialized;
-        bool _wasPaused;
-        int _currentDay;
+        public static RefundBehaviour Instance => _instance ? _instance
+            : (_instance = new GameObject().AddComponent<RefundBehaviour>());
+        
         uint _lastBuildIndex;
+        uint _currentBuildIndex => _simulationManager.m_currentBuildIndex;
+        uint _checkedBuildIndex => _buildIndexHistory[_indexToCheck];
+        uint _indexToCheck => _simulationManager.m_currentFrameIndex >> 8 & 31;
 
-        public Data Data;
+        Data _data;
 
+        EventManager _eventManager;
         SimulationManager _simulationManager;
 
         uint[] m_values;
-        uint[] _buildIndexHistory
+        uint[] _buildIndexHistory => (m_values == null)
+            ? (m_values = (uint[])_simulationManager.GetType()
+                .GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(_simulationManager))
+            : m_values;
+
+        void Awake()
         {
-            get
-            {
-                if (m_values == null)
-                {
-                    m_values = (uint[])_simulationManager.GetType()
-                        .GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic)
-                        .GetValue(_simulationManager);
-                }
-
-                return m_values;
-            }
-        }
-
-        public RefundBehaviour Init()
-        {
-            if (_initialized)
-                return this;
-
+            _data = Data.ModData;
+            _eventManager = EventManager.Instance;
             _simulationManager = Singleton<SimulationManager>.instance;
-            _currentDay = _simulationManager.m_currentGameTime.Day - 1;
-            
-            Load();
 
-            _initialized = true;
-
-            return this;
+            Logger.Message("RefundBehaviour Awake");
         }
 
-        public void Load()
+        void Start()
         {
-            try
-            {
-                Data = Data.Deserialize();
-            }
-            catch (Exception)
-            {
-                Data = new Data();
-                Data.Serialize();
-            }
+            Logger.Message("RefundBehaviour Start");
+
+            _eventManager.OnPause += OnPause;
+            _eventManager.OnResume += OnResume;
+            _eventManager.OnNewDay += OnNewDay;
+            _eventManager.OnKeyCombo += OnKeyCombo;
+            _eventManager.OnValidation += OnValidation;
+
+            OnNewDay();
         }
 
-        private void FillBuildIndexHistory(uint val, bool storeLastBuildIndex = true)
+        public static void Load()
         {
-            if (storeLastBuildIndex)
-                _lastBuildIndex = _buildIndexHistory.Where(n => n != 0 && n != uint.MaxValue).Min();
+            var i = Instance;
+        }
+
+        private void StoreBuildIndex()
+        {
+            _lastBuildIndex = _buildIndexHistory.Where(n => n != 0 && n != uint.MaxValue).Min();
+        }
+
+        private void FillBuildIndexHistory(uint val)
+        {
+            Logger.Message("Setting to " + val);
 
             var len = _buildIndexHistory.Length;
             for (var i = 0; i < len; i++)
                 _buildIndexHistory[i] = val;
         }
 
-        private void AllowRefunds(bool useCurrentBuildIndex = true)
+        private void AllowRefunds(bool useCurrentBuildIndex)
         {
-            _buildIndexHistory[_simulationManager.m_currentFrameIndex >> 8 & 31] = useCurrentBuildIndex
-                ? _simulationManager.m_currentBuildIndex
+            _buildIndexHistory[_indexToCheck] = useCurrentBuildIndex
+                ? _currentBuildIndex
                 : _lastBuildIndex;
         }
 
         void OnPause()
         {
-            if (Data.OnlyWhenPaused)
-                AllowRefunds();
+            if (_data.OnlyWhenPaused)
+                AllowRefunds(true);
         }
 
         void OnResume()
         {
-            if (Data.OnlyWhenPaused)
-                FillBuildIndexHistory(uint.MaxValue, false);
+            if (_data.OnlyWhenPaused)
+            {
+                FillBuildIndexHistory(uint.MaxValue);
+                _lastBuildIndex++;
+            }
         }
 
-        bool IsNewDay()
+        void OnKeyCombo()
         {
-            if (_currentDay != _simulationManager.m_currentGameTime.Day)
-            {
-                _currentDay = _simulationManager.m_currentGameTime.Day;
-                return true;
-            }
-
-            return false;
+            Logger.Message(_buildIndexHistory);
+            Logger.Message("last: " + _lastBuildIndex);
+            Logger.Message("current: " + _currentBuildIndex);
+            Logger.Message("checked: " + _checkedBuildIndex + " @ " + _indexToCheck);
         }
-        
-        void Update()
+
+        // when settings change
+        void OnValidation()
         {
-            bool validated;
-            if ((validated = Data.Validated()) || IsNewDay())
+            // OnlyWhenPaused has just been set in options menu
+            if (_data.OnlyWhenPaused && _eventManager.IsPaused)
             {
-                if (Data.OnlyWhenPaused)
+                AllowRefunds(false);
+            }
+            else if (_data.RemoveTimeLimit)
+            {
+                StoreBuildIndex();
+                FillBuildIndexHistory(0);
+            }
+            else if (!_data.OnlyWhenPaused && !_data.RemoveTimeLimit)
+            {
+                for (var i = 0; i < _buildIndexHistory.Length; i++)
                 {
-                    // OnlyWhenPaused has just been set in options menu
-                    if (validated && _simulationManager.SimulationPaused)
-                        AllowRefunds(false);
-                    else
-                        FillBuildIndexHistory(uint.MaxValue);
-                }
-                else if (Data.RemoveTimeLimit)
-                {
-                    FillBuildIndexHistory(0);
+                    if (_buildIndexHistory[i] == 0 || _buildIndexHistory[i] == uint.MaxValue)
+                        _buildIndexHistory[i] = _lastBuildIndex;
                 }
             }
+        }
 
-            if (!_wasPaused && _simulationManager.SimulationPaused)
-                OnPause();
-            else if (_wasPaused && !_simulationManager.SimulationPaused)
-                OnResume();
-            
-            _wasPaused = _simulationManager.SimulationPaused;
+        void OnNewDay()
+        {
+            if (_data.OnlyWhenPaused)
+            {
+                StoreBuildIndex();
+                FillBuildIndexHistory(uint.MaxValue);
+            }
+            else if (_data.RemoveTimeLimit)
+            {
+                StoreBuildIndex();
+                FillBuildIndexHistory(0);
+            }
         }
     }
 }
