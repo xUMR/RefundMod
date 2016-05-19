@@ -101,10 +101,18 @@ namespace RefundMod
         static Data Load()
         {
             Data data;
-            using (var stream = File.OpenRead(Path))
+            if (File.Exists(Path))
             {
-                var serializer = new XmlSerializer(typeof(Data));
-                data = (Data)serializer.Deserialize(stream);
+                using (var stream = File.OpenRead(Path))
+                {
+                    var serializer = new XmlSerializer(typeof(Data));
+                    data = (Data)serializer.Deserialize(stream);
+                }
+            }
+            else
+            {
+                data = new Data();
+                data.Save();
             }
 
             return data;
