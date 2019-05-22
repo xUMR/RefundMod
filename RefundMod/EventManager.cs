@@ -51,6 +51,11 @@ namespace RefundMod
             OnKeyCombo += () => { Logger.Message("OnKeyCombo"); };
             OnValidation += () => { Logger.Message("OnValidation"); };
 #endif
+            // Pause On Load (408905948) mod compatibility
+            if (IsPaused)
+            {
+                OnPause();
+            }
         }
 
         void Update()
