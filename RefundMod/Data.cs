@@ -7,6 +7,8 @@ namespace RefundMod
 {
     public sealed class Data
     {
+        public static readonly Data Default = new Data();
+
         private bool _needsValidation;
 
         private bool _removeTimeLimit;

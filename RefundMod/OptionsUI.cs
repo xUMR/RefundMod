@@ -64,6 +64,8 @@ namespace RefundMod
                 Mathf.RoundToInt(ModData.RelocateModifier * 100)),
                 0, 1, 0.05f, ModData.RelocateModifier, RelocateSliderCallback);
 
+            group.AddButton("Reset", ResetButtonCallback);
+
             helper.AddGroup(INFO_TXT);
 
             Logger.Message("On ui");
@@ -118,6 +120,17 @@ namespace RefundMod
                 _relocateLabel = _relocateSlider.parent.Find<UILabel>("Label");
             if (_relocateLabel)
                 _relocateLabel.text = string.Format(RELOCATE_FORMAT, Mathf.RoundToInt(val * 100));
+
+            _persistence.Save();
+        }
+
+        private void ResetButtonCallback()
+        {
+            TimeLimitCheckBoxCallback(Data.Default.RemoveTimeLimit);
+            WhenPausedCheckBoxCallback(Data.Default.OnlyWhenPaused);
+            DisableOthersCheckBoxCallback(Data.Default.DisableOtherEconomyMods);
+            RefundSliderCallback(Data.Default.RefundModifier);
+            RelocateSliderCallback(Data.Default.RelocateModifier);
 
             _persistence.Save();
         }
