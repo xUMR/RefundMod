@@ -18,6 +18,10 @@ namespace RefundMod
             "as if the time limit is until the game is unpaused.\n" +
             "Can't be enabled with \"Remove Time Limit\". Disabled by default.\n" +
 
+            "\nDisable Other Economy Mods: Toggle this setting if any other enabled mods\n" +
+            "override refund or relocation values. It may require reloading the map.\n" +
+            "Disabled by default.\n" +
+
             "\nRefund Modifier: Refund percentage. Default is 75%.\n" +
             "\nRelocation Modifier: Relocation cost percentage. Default is 20%.";
 
@@ -39,21 +43,24 @@ namespace RefundMod
         public void SettingsUi(UIHelperBase helper)
         {
             var group = helper.AddGroup("Settings");
-            
+
             _timeLimitCheckBox = (UICheckBox)group.AddCheckbox("Remove Time Limit",
                 ModData.RemoveTimeLimit, TimeLimitCheckBox);
-            
+
             _whenPausedCheckBox = (UICheckBox)group.AddCheckbox("Only When Paused",
                 ModData.OnlyWhenPaused, WhenPausedCheckBox);
-            
+
+            group.AddCheckbox("Disable Other Economy Mods",
+                ModData.DisableOtherEconomyMods, DisableOthersCheckBox);
+
             _refundSlider = (UISlider)group.AddSlider(string.Format(refundFormat,
                 Mathf.RoundToInt(ModData.RefundModifier * 100)),
                 -1, 1, 0.05f, ModData.RefundModifier, RefundSlider);
-            
+
             _relocateSlider = (UISlider)group.AddSlider(string.Format(relocateFormat,
                 Mathf.RoundToInt(ModData.RelocateModifier * 100)),
                 0, 1, 0.05f, ModData.RelocateModifier, RelocateSlider);
-            
+
             helper.AddGroup(_infoTxt);
 
             Logger.Message("On ui");
@@ -77,6 +84,13 @@ namespace RefundMod
 
             ModData.OnlyWhenPaused = b;
             ModData.Invalidate();
+
+            ModData.Save();
+        }
+
+        void DisableOthersCheckBox(bool b)
+        {
+            ModData.DisableOtherEconomyMods = b;
 
             ModData.Save();
         }

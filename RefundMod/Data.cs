@@ -34,6 +34,21 @@ namespace RefundMod
             }
         }
 
+        public event Action<bool> OnDisableOtherEconomyModsSet;
+        private bool _disableOtherEconomyMods;
+        public bool DisableOtherEconomyMods
+        {
+            get => _disableOtherEconomyMods;
+            set
+            {
+                if (_disableOtherEconomyMods == value) return;
+
+                _disableOtherEconomyMods = value;
+
+                OnDisableOtherEconomyModsSet?.Invoke(value);
+            }
+        }
+
         private float _refundModifier;
         public float RefundModifier
         {
@@ -42,21 +57,23 @@ namespace RefundMod
         }
 
         private float _relocateModifier;
+
         public float RelocateModifier
         {
             get { return _relocateModifier; }
             set { _relocateModifier = (float)Math.Round(Mathf.Clamp01(value), 2); }
         }
 
-        public Data(bool removeTimeLimit, bool onlyWhenPaused, float refundModifier, float relocateModifier)
+        public Data(bool removeTimeLimit, bool onlyWhenPaused, bool disableOtherEconomyMods, float refundModifier, float relocateModifier)
         {
             RemoveTimeLimit = removeTimeLimit;
             OnlyWhenPaused = onlyWhenPaused;
+            DisableOtherEconomyMods = disableOtherEconomyMods;
             RefundModifier = refundModifier;
             RelocateModifier = relocateModifier;
         }
 
-        public Data() : this(false, false, 0.75f, 0.2f) { }
+        public Data() : this(false, false, false, 0.75f, 0.2f) { }
 
         public void Invalidate()
         {
@@ -82,6 +99,7 @@ namespace RefundMod
 
                 hash = (hash * 16777619) ^ RemoveTimeLimit.GetHashCode();
                 hash = (hash * 16777619) ^ OnlyWhenPaused.GetHashCode();
+                hash = (hash * 16777619) ^ DisableOtherEconomyMods.GetHashCode();
                 hash = (hash * 16777619) ^ RefundModifier.GetHashCode();
                 hash = (hash * 16777619) ^ RelocateModifier.GetHashCode();
 
