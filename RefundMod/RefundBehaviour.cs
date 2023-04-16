@@ -1,88 +1,100 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Reflection;
-using ColossalFramework;
-using UnityEngine;
 
 namespace RefundMod
 {
-    public class RefundBehaviour : MonoBehaviour
+    public class RefundBehaviour : IDisposable
     {
-        private static RefundBehaviour _instance;
-        public static RefundBehaviour Instance => _instance ? _instance
-            : (_instance = new GameObject().AddComponent<RefundBehaviour>());
-        
-        uint _lastBuildIndex;
-        uint _currentBuildIndex => _simulationManager.m_currentBuildIndex;
-        uint _checkedBuildIndex => _buildIndexHistory[_indexToCheck];
-        uint _indexToCheck => _simulationManager.m_currentFrameIndex >> 8 & 31;
+        private readonly Data _data;
 
-        Data _data;
+        private readonly EventManager _eventManager;
+        private readonly SimulationManager _simulationManager;
 
-        EventManager _eventManager;
-        SimulationManager _simulationManager;
+        private uint _lastBuildIndex;
+        private uint CurrentBuildIndex => _simulationManager.m_currentBuildIndex;
+        private uint CheckedBuildIndex => BuildIndexHistory[IndexToCheck];
+        private uint IndexToCheck => _simulationManager.m_currentFrameIndex >> 8 & 31;
 
-        uint[] m_values;
-        uint[] _buildIndexHistory => (m_values == null)
-            ? (m_values = (uint[])_simulationManager.GetType()
-                .GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(_simulationManager))
-            : m_values;
-
-        void Awake()
+        private uint[] _buildIndexHistory;
+        private uint[] BuildIndexHistory
         {
-            _data = Data.ModData;
-            _eventManager = EventManager.Instance;
-            _simulationManager = Singleton<SimulationManager>.instance;
+            get
+            {
+                if (_buildIndexHistory != null) return _buildIndexHistory;
 
-            Logger.Message("RefundBehaviour Awake");
+                var value = _simulationManager
+                    .GetType()
+                    .GetField("m_buildIndexHistory", BindingFlags.Instance | BindingFlags.NonPublic)
+                    !.GetValue(_simulationManager);
+
+                return _buildIndexHistory = (uint[])value;
+            }
         }
 
-        void Start()
+        public RefundBehaviour(Data data, EventManager eventManager, SimulationManager simulationManager)
         {
-            Logger.Message("RefundBehaviour Start");
+            _data = data;
+            _eventManager = eventManager;
+            _simulationManager = simulationManager;
 
+            Subscribe();
+
+            OnNewDay();
+        }
+
+        private void Subscribe()
+        {
             _eventManager.OnPause += OnPause;
             _eventManager.OnResume += OnResume;
             _eventManager.OnNewDay += OnNewDay;
             _eventManager.OnKeyCombo += OnKeyCombo;
             _eventManager.OnValidation += OnValidation;
-
-            OnNewDay();
         }
 
-        public static void Load()
+        public void Dispose()
         {
-            var i = Instance;
+            _eventManager.OnPause -= OnPause;
+            _eventManager.OnResume -= OnResume;
+            _eventManager.OnNewDay -= OnNewDay;
+            _eventManager.OnKeyCombo -= OnKeyCombo;
+            _eventManager.OnValidation -= OnValidation;
         }
 
         private void StoreBuildIndex()
         {
-            _lastBuildIndex = _buildIndexHistory.Where(n => n != 0 && n != uint.MaxValue).Min();
+            _lastBuildIndex = BuildIndexHistory.Where(n => n != 0 && n != uint.MaxValue).Min();
+        }
+
+        private void RestoreBuildIndexHistory()
+        {
+            for (var i = 0; i < BuildIndexHistory.Length; i++)
+                if (BuildIndexHistory[i] == 0 || BuildIndexHistory[i] == uint.MaxValue)
+                    BuildIndexHistory[i] = _lastBuildIndex;
         }
 
         private void FillBuildIndexHistory(uint val)
         {
             Logger.Message("Setting to " + val);
 
-            var len = _buildIndexHistory.Length;
-            for (var i = 0; i < len; i++)
-                _buildIndexHistory[i] = val;
+            for (var i = 0; i < BuildIndexHistory.Length; i++)
+                BuildIndexHistory[i] = val;
         }
 
         private void AllowRefunds(bool useCurrentBuildIndex)
         {
-            _buildIndexHistory[_indexToCheck] = useCurrentBuildIndex
-                ? _currentBuildIndex
+            BuildIndexHistory[IndexToCheck] = useCurrentBuildIndex
+                ? CurrentBuildIndex
                 : _lastBuildIndex;
         }
 
-        void OnPause()
+        private void OnPause()
         {
             if (_data.OnlyWhenPaused)
                 AllowRefunds(true);
         }
 
-        void OnResume()
+        private void OnResume()
         {
             if (_data.OnlyWhenPaused)
             {
@@ -91,16 +103,19 @@ namespace RefundMod
             }
         }
 
-        void OnKeyCombo()
+        private void OnKeyCombo()
         {
-            Logger.Message(_buildIndexHistory);
+            Logger.Message(BuildIndexHistory);
             Logger.Message("last: " + _lastBuildIndex);
-            Logger.Message("current: " + _currentBuildIndex);
-            Logger.Message("checked: " + _checkedBuildIndex + " @ " + _indexToCheck);
+            Logger.Message("current: " + CurrentBuildIndex);
+            Logger.Message("checked: " + CheckedBuildIndex + " @ " + IndexToCheck);
+
+            var economyManagerHash = _simulationManager.m_ManagersWrapper.economy.GetHashCode();
+            Logger.Message($"economy manager ({economyManagerHash})");
         }
 
         // when settings change
-        void OnValidation()
+        private void OnValidation()
         {
             // OnlyWhenPaused has just been set in options menu
             if (_data.OnlyWhenPaused && _eventManager.IsPaused)
@@ -114,15 +129,11 @@ namespace RefundMod
             }
             else if (!_data.OnlyWhenPaused && !_data.RemoveTimeLimit)
             {
-                for (var i = 0; i < _buildIndexHistory.Length; i++)
-                {
-                    if (_buildIndexHistory[i] == 0 || _buildIndexHistory[i] == uint.MaxValue)
-                        _buildIndexHistory[i] = _lastBuildIndex;
-                }
+                RestoreBuildIndexHistory();
             }
         }
 
-        void OnNewDay()
+        private void OnNewDay()
         {
             if (_data.OnlyWhenPaused)
             {

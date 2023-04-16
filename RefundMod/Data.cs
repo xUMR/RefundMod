@@ -5,17 +5,15 @@ using UnityEngine;
 
 namespace RefundMod
 {
-    public class Data
+    public sealed class Data
     {
-        private const string Path = "refund.settings.xml";
         private bool _needsValidation;
-        private static Data _instance;
-        public static Data ModData => (_instance == null) ? (_instance = Load()) : _instance;
 
         private bool _removeTimeLimit;
+
         public bool RemoveTimeLimit
         {
-            get { return _removeTimeLimit; }
+            get => _removeTimeLimit;
             set
             {
                 _removeTimeLimit = value;
@@ -24,9 +22,10 @@ namespace RefundMod
         }
 
         private bool _onlyWhenPaused;
+
         public bool OnlyWhenPaused
         {
-            get { return _onlyWhenPaused; }
+            get => _onlyWhenPaused;
             set
             {
                 _onlyWhenPaused = value;
@@ -36,6 +35,7 @@ namespace RefundMod
 
         public event Action<bool> OnDisableOtherEconomyModsSet;
         private bool _disableOtherEconomyMods;
+
         public bool DisableOtherEconomyMods
         {
             get => _disableOtherEconomyMods;
@@ -50,21 +50,27 @@ namespace RefundMod
         }
 
         private float _refundModifier;
+
         public float RefundModifier
         {
-            get { return _refundModifier; }
-            set { _refundModifier = (float)Math.Round(Mathf.Clamp(value, -1, 1), 2); }
+            get => _refundModifier;
+            set => _refundModifier = (float)Math.Round(Mathf.Clamp(value, -1, 1), 2);
         }
 
         private float _relocateModifier;
 
         public float RelocateModifier
         {
-            get { return _relocateModifier; }
-            set { _relocateModifier = (float)Math.Round(Mathf.Clamp01(value), 2); }
+            get => _relocateModifier;
+            set => _relocateModifier = (float)Math.Round(Mathf.Clamp01(value), 2);
         }
 
-        public Data(bool removeTimeLimit, bool onlyWhenPaused, bool disableOtherEconomyMods, float refundModifier, float relocateModifier)
+        public Data(
+            bool removeTimeLimit,
+            bool onlyWhenPaused,
+            bool disableOtherEconomyMods,
+            float refundModifier,
+            float relocateModifier)
         {
             RemoveTimeLimit = removeTimeLimit;
             OnlyWhenPaused = onlyWhenPaused;
@@ -73,14 +79,20 @@ namespace RefundMod
             RelocateModifier = relocateModifier;
         }
 
-        public Data() : this(false, false, false, 0.75f, 0.2f) { }
+        public Data() : this(
+            false,
+            false,
+            false,
+            0.75f,
+            0.2f) { }
+
 
         public void Invalidate()
         {
             _needsValidation = true;
         }
 
-        public bool Validated()
+        public bool Validate()
         {
             if (_needsValidation)
             {
@@ -107,33 +119,36 @@ namespace RefundMod
             }
         }
 
-        public void Save()
+        public sealed class Persistence
         {
-            using (var stream = File.CreateText(Path))
-            {
-                var serializer = new XmlSerializer(typeof(Data));
-                serializer.Serialize(stream, this);
-            }
-        }
+            private const string PATH = "refund.settings.xml";
+            private readonly XmlSerializer _serializer = new XmlSerializer(typeof(Data));
 
-        static Data Load()
-        {
-            Data data;
-            if (File.Exists(Path))
+            public Data Data { get; private set; }
+
+            public Persistence()
             {
-                using (var stream = File.OpenRead(Path))
+                Load();
+            }
+
+            public void Save()
+            {
+                using var stream = File.CreateText(PATH);
+                _serializer.Serialize(stream, Data);
+            }
+
+            public void Load()
+            {
+                if (!File.Exists(PATH))
                 {
-                    var serializer = new XmlSerializer(typeof(Data));
-                    data = (Data)serializer.Deserialize(stream);
+                    Data = new Data();
+                    Save();
+                    return;
                 }
-            }
-            else
-            {
-                data = new Data();
-                data.Save();
-            }
 
-            return data;
+                using var stream = File.OpenRead(PATH);
+                Data = (Data)_serializer.Deserialize(stream);
+            }
         }
     }
 }

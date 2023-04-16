@@ -15,6 +15,8 @@ namespace RefundMod
         private List<IEconomyExtension> _economyExtensionsBackup;
         private List<IEconomyExtension> _economyExtensions;
 
+        private Data ModData => Mod.Data;
+
         public override void OnCreated(IEconomy economy)
         {
             base.OnCreated(economy);
@@ -89,7 +91,7 @@ namespace RefundMod
             var value = economyWrapper
                 .GetType()
                 .GetField("m_EconomyExtensions", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(economyWrapper);
+                !.GetValue(economyWrapper);
 
             _economyExtensions = (List<IEconomyExtension>)value;
 

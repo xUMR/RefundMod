@@ -11,6 +11,8 @@
     <AssemblyName>Refund</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <LangVersion>8</LangVersion>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -56,7 +58,7 @@
     <Compile Include="RefundBehaviour.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="Data.cs" />
-    <Compile Include="Ui.cs" />
+    <Compile Include="OptionsUI.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
