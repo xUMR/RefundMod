@@ -1,3 +1,4 @@
+using System.Reflection;
 using ICities;
 using UnityEngine;
 using ColossalFramework.UI;
@@ -27,6 +28,7 @@ namespace RefundMod
 
         private UICheckBox _timeLimitCheckBox;
         private UICheckBox _whenPausedCheckBox;
+        private UICheckBox _disableOthersCheckBox;
 
         private UISlider _refundSlider;
         private UISlider _relocateSlider;
@@ -53,7 +55,7 @@ namespace RefundMod
             _whenPausedCheckBox = (UICheckBox)group.AddCheckbox("Only When Paused",
                 ModData.OnlyWhenPaused, WhenPausedCheckBoxCallback);
 
-            group.AddCheckbox("Disable Other Economy Mods",
+            _disableOthersCheckBox = (UICheckBox)group.AddCheckbox("Disable Other Economy Mods",
                 ModData.DisableOtherEconomyMods, DisableOthersCheckBoxCallback);
 
             _refundSlider = (UISlider)group.AddSlider(string.Format(REFUND_FORMAT,
@@ -64,7 +66,9 @@ namespace RefundMod
                 Mathf.RoundToInt(ModData.RelocateModifier * 100)),
                 0, 1, 0.05f, ModData.RelocateModifier, RelocateSliderCallback);
 
-            group.AddButton("Reset", ResetButtonCallback);
+            group.AddSpace(10);
+
+            group.AddButton("Restore Defaults", ResetButtonCallback);
 
             helper.AddGroup(INFO_TXT);
 
@@ -126,11 +130,11 @@ namespace RefundMod
 
         private void ResetButtonCallback()
         {
-            TimeLimitCheckBoxCallback(Data.Default.RemoveTimeLimit);
-            WhenPausedCheckBoxCallback(Data.Default.OnlyWhenPaused);
-            DisableOthersCheckBoxCallback(Data.Default.DisableOtherEconomyMods);
-            RefundSliderCallback(Data.Default.RefundModifier);
-            RelocateSliderCallback(Data.Default.RelocateModifier);
+            _timeLimitCheckBox.isChecked = Data.Default.RemoveTimeLimit;
+            _whenPausedCheckBox.isChecked = Data.Default.OnlyWhenPaused;
+            _disableOthersCheckBox.isChecked = Data.Default.DisableOtherEconomyMods;
+            _refundSlider.value = Data.Default.RefundModifier;
+            _relocateSlider.value = Data.Default.RelocateModifier;
 
             _persistence.Save();
         }
