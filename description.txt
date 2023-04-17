@@ -5,5 +5,6 @@ Settings can be found in the in-game options menu. [b]The default settings won't
 The configuration file is [i]...\Steam\SteamApps\common\Cities_Skylines\refund.settings.xml[/i]
 * Change [i]RemoveTimeLimit[/i] to [i]true[/i] to disable the time limit, bulldozed buildings will always be refunded. If disabled after being enabled, playing for some time (14 in-game days when I tested) will nullify the changes. It cannot be used with [i]OnlyWhenPaused[/i].
 * Changing [i]OnlyWhenPaused[/i] to [i]true[/i] will disable refunds when the game is not paused. It cannot be used with [i]RemoveTimeLimit[/i].
+* Change [i]DisableOtherEconomyMods[/i] to [i]true[/i] to disable other economy mods in case they override refund or relocation values.
 * [i]RefundModifier[/i] sets the refund modifier, can be any value between -1 and 1. Set to 1 for a full refund.
 * [i]RelocateModifier[/i] sets the relocation modifier, can be any value between 0 and 1. Set to 0 for free relocation.

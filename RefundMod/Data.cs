@@ -130,6 +130,13 @@ namespace RefundMod
 
             public Persistence()
             {
+                if (!File.Exists(PATH))
+                {
+                    Data = new Data();
+                    Save();
+                    return;
+                }
+
                 Load();
             }
 
@@ -141,13 +148,6 @@ namespace RefundMod
 
             public void Load()
             {
-                if (!File.Exists(PATH))
-                {
-                    Data = new Data();
-                    Save();
-                    return;
-                }
-
                 using var stream = File.OpenRead(PATH);
                 Data = (Data)_serializer.Deserialize(stream);
             }

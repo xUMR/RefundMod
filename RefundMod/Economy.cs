@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using ColossalFramework;
 using ICities;
-using static RefundMod.Data;
 
 namespace RefundMod
 {
