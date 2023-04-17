@@ -1,4 +1,4 @@
-Modify refund and relocation costs in-game, remove time limit for refund. [url=https://github.com/xUMR/RefundMod/]Source[/url] 
+Modify refund and relocation costs in-game, remove time limit for refund. [url=https://github.com/xUMR/RefundMod/]Source[/url]
 
 Settings can be found in the in-game options menu. [b]The default settings won't affect gameplay.[/b]
 
@@ -8,3 +8,5 @@ The configuration file is [i]...\Steam\SteamApps\common\Cities_Skylines\refund.s
 * Change [i]DisableOtherEconomyMods[/i] to [i]true[/i] to disable other economy mods in case they override refund or relocation values.
 * [i]RefundModifier[/i] sets the refund modifier, can be any value between -1 and 1. Set to 1 for a full refund.
 * [i]RelocateModifier[/i] sets the relocation modifier, can be any value between 0 and 1. Set to 0 for free relocation.
+
+[i]Thanks to [url=https://github.com/meiskam]meiskam[/url] for fixing a bug which caused the mod to crash.[/i]
