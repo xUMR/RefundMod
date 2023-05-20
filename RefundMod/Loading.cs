@@ -25,8 +25,12 @@ namespace RefundMod
 
         public override void OnLevelUnloading()
         {
-            _refund.Dispose();
-            Object.Destroy(_refundModGameObject);
+            _refund?.Dispose();
+
+            if (_refundModGameObject)
+            {
+                Object.Destroy(_refundModGameObject);
+            }
         }
     }
 }

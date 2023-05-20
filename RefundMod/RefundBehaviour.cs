@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
 
 namespace RefundMod
@@ -39,15 +38,13 @@ namespace RefundMod
             _simulationManager = simulationManager;
 
             Subscribe();
-
-            OnNewDay();
         }
 
         private void Subscribe()
         {
             _eventManager.OnPause += OnPause;
             _eventManager.OnResume += OnResume;
-            _eventManager.OnNewDay += OnNewDay;
+            _eventManager.OnNewTick += OnNewTick;
             _eventManager.OnKeyCombo += OnKeyCombo;
             _eventManager.OnValidation += OnValidation;
         }
@@ -56,20 +53,43 @@ namespace RefundMod
         {
             _eventManager.OnPause -= OnPause;
             _eventManager.OnResume -= OnResume;
-            _eventManager.OnNewDay -= OnNewDay;
+            _eventManager.OnNewTick -= OnNewTick;
             _eventManager.OnKeyCombo -= OnKeyCombo;
             _eventManager.OnValidation -= OnValidation;
         }
 
         private void StoreBuildIndex()
         {
-            _lastBuildIndex = BuildIndexHistory.Where(n => n != 0 && n != uint.MaxValue).Min();
+            var min = uint.MaxValue;
+
+            foreach (var n in BuildIndexHistory)
+                if (IsBuildIndexValid(n))
+                    min = Math.Min(min, n);
+
+            if (min != uint.MaxValue)
+            {
+                _lastBuildIndex = min;
+                return;
+            }
+
+            // at this point all values in the BuildIndexHistory are invalid
+            // either 0 or uint.MaxValue
+
+            if (!IsBuildIndexValid(_lastBuildIndex))
+            {
+                _lastBuildIndex = CurrentBuildIndex;
+            }
         }
 
         private void RestoreBuildIndexHistory()
         {
+            if (!IsBuildIndexValid(_lastBuildIndex))
+            {
+                _lastBuildIndex = CurrentBuildIndex;
+            }
+
             for (var i = 0; i < BuildIndexHistory.Length; i++)
-                if (BuildIndexHistory[i] == 0 || BuildIndexHistory[i] == uint.MaxValue)
+                if (!IsBuildIndexValid(BuildIndexHistory[i]))
                     BuildIndexHistory[i] = _lastBuildIndex;
         }
 
@@ -133,7 +153,7 @@ namespace RefundMod
             }
         }
 
-        private void OnNewDay()
+        private void OnNewTick()
         {
             if (_data.OnlyWhenPaused)
             {
@@ -146,5 +166,7 @@ namespace RefundMod
                 FillBuildIndexHistory(0);
             }
         }
+
+        private static bool IsBuildIndexValid(uint n) => n != 0 && n != uint.MaxValue;
     }
 }
